@@ -1,8 +1,8 @@
-#🎄 Advent of Code (2024)
+# 🎄 [Advent of Code](https://adventofcode.com/) (2024)
 
 Welcome to Advent of Code 2024. This is my solutions for the "Advent of Code 2024".
 
-# What is Advent of Code?
+# [What is Advent of Code?](https://advenofcode.com/2024/about)
 Advent of Code is an Advent calendar of small programming puzzles for a variety of skill levels that can be solved in any programming language you like. People use them as interview prep, company training, university coursework, practice problems, a speed contest, or to challenge each other.
 
 # Requirements
@@ -18,7 +18,9 @@ cd your-repo
 ```
 
 ## Install dependencies
+```
 deno install
+```
 
 ## Running the Project
 First of all you have to create a `session.txt` file containing your Advent of Code session cookie. It allows the fetching for problem statement from the site and generate the boilerplate code, and Inputs to solve the problem.
