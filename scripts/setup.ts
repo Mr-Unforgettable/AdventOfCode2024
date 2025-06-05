@@ -30,10 +30,14 @@ async function fetchProblem(
   }
   const html = await res.text();
   const matches = html.match(/<article.*?<\/article>/gs);
-  const markdown =
-    matches?.map((article) =>
-      article.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim()
-    ).join("\n\n") ?? "";
+  const markdown = matches
+    ?.map((article) =>
+      article
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .trim()
+    )
+    .join("\n\n") ?? "";
 
   return { markdown, html };
 }
@@ -42,37 +46,49 @@ function isPart2Unlocked(html: string): boolean {
   return html.includes("--- Part Two ---");
 }
 
-function extractExamplesByParts(
-  html: string,
-): { part1?: string; part2?: string } {
+function extractExamplesByParts(html: string): {
+  part1?: string;
+  part2?: string;
+} {
   const parts = html.split(/<h2.*?>--- Part Two ---<\/h2>/);
-  const examples = {
-    part1: parts[0]?.match(/<pre><code>([\s\S]*?)<\/code><\/pre>/)?.[1]?.trim(),
-    part2: parts[1]?.match(/<pre><code>([\s\S]*?)<\/code><\/pre>/)?.[1]?.trim(),
-  };
+  const extractPreBlocks = (section: string): string[] =>
+    [...section.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map((m) =>
+      m[1].trim()
+    );
 
-  return examples;
+  const part1Examples = parts[0] ? extractPreBlocks(parts[0]) : [];
+  const part2Examples = parts[1] ? extractPreBlocks(parts[1]) : [];
+
+  const part1 = part1Examples[0];
+  const part2 = part2Examples[0] ?? part1;
+
+  return { part1, part2 };
 }
 
 function boilerplate(): string {
-  return `const input = await Deno.readTextFile("input.txt");
-
-export function part1(input: string): string | number {
+  return `export function part1(input: string): string | number {
     return "";
 }
 export function part2(input: string): string | number {
     return "";
 }
 
-console.log("Part 1:", part1(input));
-console.log("Part 2:", part2(input));
-  `;
+if (import.meta.main) {
+  const __dirname = new URL('.', import.meta.url).pathname;
+  const input = await Deno.readTextFile(\`\${__dirname}/input.txt\`);
+  console.log("Part 1:", part1(input));
+  console.log("Part 2:", part2(input));
+}`;
 }
 
 // Generate test file
-function generateTestFile(
-  { part1, part2 }: { part1?: string; part2?: string },
-): string {
+function generateTestFile({
+  part1,
+  part2,
+}: {
+  part1?: string;
+  part2?: string;
+}): string {
   const tests = [];
 
   if (part1) {
@@ -86,7 +102,7 @@ Deno.test("Part 1 example", () => {
 
   if (part2) {
     tests.push(`
-Deno.test("Part 1 example", () => {
+Deno.test("Part 2 example", () => {
     const input = \`${part2.replace(/`/g, "\\`")}\`;
     const result = part2(input);
     assertEquals(result, "EXPECTED_OUTPUT_2");
@@ -115,12 +131,24 @@ async function setupDay(day: number, { force = false } = {}) {
 
   const part2Available = isPart2Unlocked(html);
   const examples = extractExamplesByParts(html);
-  const testFileContent = generateTestFile(examples);
+  // const testFileContent = generateTestFile(examples);
 
   await Deno.writeTextFile(`${dir}/input.txt`, input.trim());
   await Deno.writeTextFile(`${dir}/problem.md`, markdown);
   await Deno.writeTextFile(`${dir}/problem.html`, html);
-  await Deno.writeTextFile(`${dir}/main_test.ts`, testFileContent);
+
+  const testFilePath = `${dir}/main_test.ts`;
+  let existingTestContent = "";
+
+  try {
+    existingTestContent = await Deno.readTextFile(testFilePath);
+  } catch {
+    // File doesn't exist yet
+  }
+
+  const newTestContent = generateTestFile(examples);
+  const mergedTestContent = mergeTests(existingTestContent, newTestContent);
+  await Deno.writeTextFile(testFilePath, mergedTestContent);
 
   const mainPath = `${dir}/main.ts`;
   try {
@@ -143,6 +171,28 @@ async function setupDay(day: number, { force = false } = {}) {
       part2Available ? "available" : "unavailable"
     }.)`,
   );
+}
+
+function mergeTests(existing: string, generated: string): string {
+  const hasPart1 = existing.includes("Part 1 example");
+  const hasPart2 = existing.includes("EXPECTED_OUTPUT_2");
+
+  const [_, ...newTests] = generated.split(/import .*\n/); // skip import
+
+  let finalContent = existing ||
+    `import { part1, part2 } from "./main.ts";
+import { assertEquals } from "jsr:@std/assert";
+`;
+
+  if (!hasPart1 && /Part 1 example/.test(newTests.join(""))) {
+    finalContent += newTests.find((t) => t.includes("Part 1 example")) ?? "";
+  }
+
+  if (!hasPart2 && /EXPECTED_OUTPUT_2/.test(newTests.join(""))) {
+    finalContent += newTests.find((t) => t.includes("EXPECTED_OUTPUT_2")) ?? "";
+  }
+
+  return finalContent;
 }
 
 // CLI entrypoint
