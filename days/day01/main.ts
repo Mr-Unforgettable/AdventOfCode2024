@@ -1,5 +1,3 @@
-// import { join } from "@std/join";
-
 // Parse function to extract the left/right arrays
 function parseInput(input: string): [number[], number[]] {
   const left: number[] = [];
@@ -40,7 +38,7 @@ export function part2(input: string): number {
 }
 
 if (import.meta.main) {
-  const __dirname = new URL('.', import.meta.url).pathname;
+  const __dirname = new URL(".", import.meta.url).pathname;
   const input = await Deno.readTextFile(`${__dirname}/input.txt`);
   console.log("Part 1:", part1(input));
   console.log("Part 2:", part2(input));
