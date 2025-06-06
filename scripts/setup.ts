@@ -138,17 +138,17 @@ async function setupDay(day: number, { force = false } = {}) {
   await Deno.writeTextFile(`${dir}/problem.html`, html);
 
   const testFilePath = `${dir}/main_test.ts`;
-  let existingTestContent = "";
+  // let existingTestContent = "";
 
-  try {
-    existingTestContent = await Deno.readTextFile(testFilePath);
-  } catch {
-    // File doesn't exist yet
-  }
+  // try {
+  //   existingTestContent = await Deno.readTextFile(testFilePath);
+  // } catch {
+  //   // File doesn't exist yet
+  // }
 
   const newTestContent = generateTestFile(examples);
-  const mergedTestContent = mergeTests(existingTestContent, newTestContent);
-  await Deno.writeTextFile(testFilePath, mergedTestContent);
+  // const mergedTestContent = mergeTests(existingTestContent, newTestContent);
+  await Deno.writeTextFile(testFilePath, newTestContent);
 
   const mainPath = `${dir}/main.ts`;
   try {
@@ -173,27 +173,27 @@ async function setupDay(day: number, { force = false } = {}) {
   );
 }
 
-function mergeTests(existing: string, generated: string): string {
-  const hasPart1 = existing.includes("Part 1 example");
-  const hasPart2 = existing.includes("EXPECTED_OUTPUT_2");
+// function mergeTests(existing: string, generated: string): string {
+//   const hasPart1 = existing.includes("Part 1 example");
+//   const hasPart2 = existing.includes("EXPECTED_OUTPUT_2");
 
-  const [_, ...newTests] = generated.split(/import .*\n/); // skip import
+//   const [_, ...newTests] = generated.split(/import .*\n/); // skip import
 
-  let finalContent = existing ||
-    `import { part1, part2 } from "./main.ts";
-import { assertEquals } from "jsr:@std/assert";
-`;
+//   let finalContent = existing ||
+//     `import { part1, part2 } from "./main.ts";
+// import { assertEquals } from "jsr:@std/assert";
+// `;
 
-  if (!hasPart1 && /Part 1 example/.test(newTests.join(""))) {
-    finalContent += newTests.find((t) => t.includes("Part 1 example")) ?? "";
-  }
+//   if (!hasPart1 && /Part 1 example/.test(newTests.join(""))) {
+//     finalContent += newTests.find((t) => t.includes("Part 1 example")) ?? "";
+//   }
 
-  if (!hasPart2 && /EXPECTED_OUTPUT_2/.test(newTests.join(""))) {
-    finalContent += newTests.find((t) => t.includes("EXPECTED_OUTPUT_2")) ?? "";
-  }
+//   if (!hasPart2 && /EXPECTED_OUTPUT_2/.test(newTests.join(""))) {
+//     finalContent += newTests.find((t) => t.includes("EXPECTED_OUTPUT_2")) ?? "";
+//   }
 
-  return finalContent;
-}
+//   return finalContent;
+// }
 
 // CLI entrypoint
 if (import.meta.main) {
