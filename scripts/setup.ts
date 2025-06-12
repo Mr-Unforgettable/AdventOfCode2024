@@ -51,40 +51,29 @@ function isPart2Unlocked(html: string): boolean {
 function extractExamplesByParts(html: string): {
 	part1?: string;
 	part2?: string;
-	expected1?: string;
-	expected2?: string;
 } {
 	const parts = html.split(/<h2.*?>--- Part Two ---<\/h2>/);
 	const [part1Html, part2Html] = parts;
 
 	const extractPreBlocks = (
 		section: string,
-	): { input?: string; output?: string } => {
+	): { input?: string } => {
 		const pAndPreRegex =
 			/<p[^>]*>[^<]*for example[^<]*<\/p>\s*<pre><code>([\s\S]*?)<\/code><\/pre>/i;
 		const match = pAndPreRegex.exec(section);
 		const input = match?.[1]?.replace(/<[^>]+>/g, '').trim();
 
-		const outputMatch = section.match(/<code><em>(.*?)<\/em><\/code>/);
-		const output = outputMatch?.[1]?.trim();
-
-		return { input, output };
+		return { input };
 	};
 
-	// const part1Examples = parts[0] ? extractPreBlocks(parts[0]) : [];
-	// const part2Examples = parts[1] ? extractPreBlocks(parts[1]) : [];
-
-	// const part1 = part1Examples[0];
-	// const part2 = part2Examples[0] ?? part1;
-
-	const { input: part1, output: expected1 } = extractPreBlocks(
+	const { input: part1 } = extractPreBlocks(
 		part1Html,
 	);
-	const { input: part2, output: expected2 } = extractPreBlocks(
+	const { input: part2 } = extractPreBlocks(
 		part2Html || '',
 	);
 
-	return { part1, part2: part2 ?? part1, expected1, expected2 };
+	return { part1, part2 };
 }
 
 function boilerplate(): string {
@@ -107,27 +96,18 @@ if (import.meta.main) {
 function generateTestFile({
 	part1,
 	part2,
-	expected1,
-	expected2,
 }: {
 	part1?: string;
 	part2?: string;
-	expected1?: string;
-	expected2?: string;
 }): string {
 	const tests: string[] = [];
-
-	const formatExpected = (value?: string): string => {
-		if (value === undefined) return '"EXPECTED_OUTPUT"';
-		return /^\d+$/.test(value) ? value : `"${value}"`;
-	};
 
 	if (part1) {
 		tests.push(`
 Deno.test("Part 1 example", () => {
     const input = \`${part1.replace(/`/g, '\\`')}\`;
     const result = part1(input);
-    assertEquals(result, ${formatExpected(expected1)});
+    assertEquals(result, "YOUR_OUTPUT_1");
 });`);
 	}
 
@@ -136,7 +116,7 @@ Deno.test("Part 1 example", () => {
 Deno.test("Part 2 example", () => {
     const input = \`${part2.replace(/`/g, '\\`')}\`;
     const result = part2(input);
-    assertEquals(result, ${formatExpected(expected2)});
+    assertEquals(result, "YOUR_OUTPUT_2");
 });`);
 	}
 
@@ -169,16 +149,8 @@ async function setupDay(day: number, { force = false } = {}) {
 	await Deno.writeTextFile(`${dir}/problem.html`, html);
 
 	const testFilePath = `${dir}/main_test.ts`;
-	// let existingTestContent = "";
-
-	// try {
-	//   existingTestContent = await Deno.readTextFile(testFilePath);
-	// } catch {
-	//   // File doesn't exist yet
-	// }
 
 	const newTestContent = generateTestFile(examples);
-	// const mergedTestContent = mergeTests(existingTestContent, newTestContent);
 	await Deno.writeTextFile(testFilePath, newTestContent);
 
 	const mainPath = `${dir}/main.ts`;
@@ -203,28 +175,6 @@ async function setupDay(day: number, { force = false } = {}) {
 		}.)`,
 	);
 }
-
-// function mergeTests(existing: string, generated: string): string {
-//   const hasPart1 = existing.includes("Part 1 example");
-//   const hasPart2 = existing.includes("EXPECTED_OUTPUT_2");
-
-//   const [_, ...newTests] = generated.split(/import .*\n/); // skip import
-
-//   let finalContent = existing ||
-//     `import { part1, part2 } from "./main.ts";
-// import { assertEquals } from "jsr:@std/assert";
-// `;
-
-//   if (!hasPart1 && /Part 1 example/.test(newTests.join(""))) {
-//     finalContent += newTests.find((t) => t.includes("Part 1 example")) ?? "";
-//   }
-
-//   if (!hasPart2 && /EXPECTED_OUTPUT_2/.test(newTests.join(""))) {
-//     finalContent += newTests.find((t) => t.includes("EXPECTED_OUTPUT_2")) ?? "";
-//   }
-
-//   return finalContent;
-// }
 
 // CLI entrypoint
 if (import.meta.main) {
