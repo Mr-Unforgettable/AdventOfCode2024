@@ -51,20 +51,40 @@ function isPart2Unlocked(html: string): boolean {
 function extractExamplesByParts(html: string): {
 	part1?: string;
 	part2?: string;
+	expected1?: string;
+	expected2?: string;
 } {
 	const parts = html.split(/<h2.*?>--- Part Two ---<\/h2>/);
-	const extractPreBlocks = (section: string): string[] =>
-		[...section.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map((
-			m,
-		) => m[1].trim());
+	const [part1Html, part2Html] = parts;
 
-	const part1Examples = parts[0] ? extractPreBlocks(parts[0]) : [];
-	const part2Examples = parts[1] ? extractPreBlocks(parts[1]) : [];
+	const extractPreBlocks = (
+		section: string,
+	): { input?: string; output?: string } => {
+		const pAndPreRegex =
+			/<p[^>]*>[^<]*for example[^<]*<\/p>\s*<pre><code>([\s\S]*?)<\/code><\/pre>/i;
+		const match = pAndPreRegex.exec(section);
+		const input = match?.[1]?.replace(/<[^>]+>/g, '').trim();
 
-	const part1 = part1Examples[0];
-	const part2 = part2Examples[0] ?? part1;
+		const outputMatch = section.match(/<code><em>(.*?)<\/em><\/code>/);
+		const output = outputMatch?.[1]?.trim();
 
-	return { part1, part2 };
+		return { input, output };
+	};
+
+	// const part1Examples = parts[0] ? extractPreBlocks(parts[0]) : [];
+	// const part2Examples = parts[1] ? extractPreBlocks(parts[1]) : [];
+
+	// const part1 = part1Examples[0];
+	// const part2 = part2Examples[0] ?? part1;
+
+	const { input: part1, output: expected1 } = extractPreBlocks(
+		part1Html,
+	);
+	const { input: part2, output: expected2 } = extractPreBlocks(
+		part2Html || '',
+	);
+
+	return { part1, part2: part2 ?? part1, expected1, expected2 };
 }
 
 function boilerplate(): string {
@@ -87,18 +107,27 @@ if (import.meta.main) {
 function generateTestFile({
 	part1,
 	part2,
+	expected1,
+	expected2,
 }: {
 	part1?: string;
 	part2?: string;
+	expected1?: string;
+	expected2?: string;
 }): string {
-	const tests = [];
+	const tests: string[] = [];
+
+	const formatExpected = (value?: string): string => {
+		if (value === undefined) return '"EXPECTED_OUTPUT"';
+		return /^\d+$/.test(value) ? value : `"${value}"`;
+	};
 
 	if (part1) {
 		tests.push(`
 Deno.test("Part 1 example", () => {
     const input = \`${part1.replace(/`/g, '\\`')}\`;
     const result = part1(input);
-    assertEquals(result, "EXPECTED_OUTPUT_1");
+    assertEquals(result, ${formatExpected(expected1)});
 });`);
 	}
 
@@ -107,7 +136,7 @@ Deno.test("Part 1 example", () => {
 Deno.test("Part 2 example", () => {
     const input = \`${part2.replace(/`/g, '\\`')}\`;
     const result = part2(input);
-    assertEquals(result, "EXPECTED_OUTPUT_2");
+    assertEquals(result, ${formatExpected(expected2)});
 });`);
 	}
 
