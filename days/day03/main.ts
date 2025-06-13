@@ -7,7 +7,7 @@ export function part1(input: string): number {
 
 	// Loop till a vaild match is found
 	while ((match = pattern.exec(input)) !== null) {
-		sum += parseInt(match[1], 10) * parseInt(match[2], 10);
+		sum += Number(match[1]) * Number(match[2]);
 	}
 
 	return sum;
@@ -43,7 +43,7 @@ export function part2(input: string): number {
 		const mulMatch = mulPattern.exec(input);
 		if (mulMatch && mulMatch.index === pos) {
 			if (enabled) {
-				sum += parseInt(mulMatch[1], 10) * parseInt(mulMatch[2], 10);
+				sum += Number(mulMatch[1]) * Number(mulMatch[2]);
 			}
 			pos += mulMatch[0].length;
 			continue;
