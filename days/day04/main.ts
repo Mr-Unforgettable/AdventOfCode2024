@@ -2,31 +2,35 @@ export function part1(input: string): string | number {
 	const grid = input.split('\n');
 	const word = 'XMAS';
 	const directions = [
-		[0, 1], // right
-		[-1, 0], // left
-		[1, 0], // top
-		[0, -1], // bottom
-		[1, 1], // top-right
-		[-1, 1], // top-left
-		[-1, -1], // bottom-left
-		[1, -1], // bottom-right
+		[0, 1],    // right (→)
+		[0, -1],   // left (←)
+		[1, 0],    // down (↓)
+		[-1, 0],   // up (↑)
+		[1, 1],    // down-right (↘)
+		[1, -1],   // down-left (↙)
+		[-1, 1],   // up-right (↗)
+		[-1, -1],  // up-left (↖)
 	];
 	const rows = grid.length;
 	const cols = grid[0].length;
 	let count = 0;
 
+	// Out of Bounds checker helper function
 	function isValid(x: number, y: number): boolean {
 		return x >= 0 && y >= 0 && x < rows && y < cols;
 	}
 
 	for (let i = 0; i < rows; i++) {
 		for (let j = 0; j < cols; j++) {
+			// Check all possible directions
 			for (const [dx, dy] of directions) {
 				let found = true;
+				// Check for a matching word
 				for (let k = 0; k < word.length; k++) {
 					const ni = i + dx * k;
 					const nj = j + dy * k;
 
+					// If index is out of bounds and word don't matches
 					if (!isValid(ni, nj) || grid[ni][nj] !== word[k]) {
 						found = false;
 						break;
